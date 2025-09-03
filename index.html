@@ -1,0 +1,376 @@
+    
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tangent to a Parabola Curve</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
+        .container { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h1 { text-align: center; }
+        #graph { display: block; margin: 0 auto 24px auto; background: #f0f0f0; border-radius: 8px; }
+        .slider-container { text-align: center; margin-top: 16px; }
+        .slider-label { font-size: 1.1em; margin-right: 8px; }
+        #x0-value { font-weight: bold; }
+        .invalid-ln {
+            outline: 2px solid #ff4136;
+            background: #ffeaea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Parabola and its Tangent: f(x) = x² + 10</h1>
+        <canvas id="graph-parabola" width="600" height="400"></canvas>
+        <div class="slider-container">
+            <span class="slider-label">x₀ = <span id="x0-value-parabola">0</span></span>
+            <input type="range" id="x0-slider-parabola" min="-15" max="15" step="0.1" value="0">
+            <div style="margin-top:10px"><span class="slider-label">Tangent slope (f'(x₀)) = <span id="slope-value-parabola">0</span></span></div>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Sine curve and its Tangent: f(x) = sin(x)</h1>
+        <canvas id="graph-sine" width="600" height="400"></canvas>
+        <div class="slider-container">
+            <span class="slider-label">x₀ = <span id="x0-value-sine">0</span></span>
+            <input type="range" id="x0-slider-sine" min="-6.28" max="6.28" step="0.01" value="0">
+            <div style="margin-top:10px"><span class="slider-label">Tangent slope (f'(x₀)) = <span id="slope-value-sine">0</span></span></div>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Natural Logarithm and its Tangent: f(x) = ln(x)</h1>
+        <canvas id="graph-ln" width="600" height="400"></canvas>
+        <div class="slider-container">
+            <span class="slider-label">x₀ = <span id="x0-value-ln">1</span></span>
+            <input type="range" id="x0-slider-ln" min="0.1" max="6" step="0.01" value="1">
+            <div style="margin-top:10px"><span class="slider-label">Tangent slope (f'(x₀)) = <span id="slope-value-ln">0</span></span></div>
+        </div>
+    </div>
+    <script>
+    // --- Parabola Example ---
+    // --- Natural Logarithm Example ---
+    function f_ln(x) { return Math.log(x); }
+    function df_ln(x) { return 1 / x; }
+    const canvasLn = document.getElementById('graph-ln');
+    const ctxLn = canvasLn.getContext('2d');
+    const widthLn = canvasLn.width;
+    const heightLn = canvasLn.height;
+    const xMinLn = 0.1, xMaxLn = 6;
+    const yMinLn = -2.5, yMaxLn = 2;
+    function xToCanvasLn(x) {
+        return (x - xMinLn) / (xMaxLn - xMinLn) * widthLn;
+    }
+    function yToCanvasLn(y) {
+        return heightLn - (y - yMinLn) / (yMaxLn - yMinLn) * heightLn;
+    }
+    function drawAxesLn() {
+        ctxLn.save();
+        ctxLn.strokeStyle = '#bbb';
+        ctxLn.lineWidth = 1;
+        // x axis
+        ctxLn.beginPath();
+        ctxLn.moveTo(xToCanvasLn(xMinLn), yToCanvasLn(0));
+        ctxLn.lineTo(xToCanvasLn(xMaxLn), yToCanvasLn(0));
+        ctxLn.stroke();
+        // y axis
+        ctxLn.beginPath();
+        ctxLn.moveTo(xToCanvasLn(0.0001), yToCanvasLn(yMinLn)); // avoid log(0)
+        ctxLn.lineTo(xToCanvasLn(0.0001), yToCanvasLn(yMaxLn));
+        ctxLn.stroke();
+        ctxLn.restore();
+    }
+    function drawFunctionLn() {
+        ctxLn.save();
+        ctxLn.strokeStyle = '#0074d9';
+        ctxLn.lineWidth = 2;
+        ctxLn.beginPath();
+        for (let px = 0; px <= widthLn; px++) {
+            let x = xMinLn + (xMaxLn - xMinLn) * px / widthLn;
+            let y = f_ln(x);
+            let py = yToCanvasLn(y);
+            if (px === 0) ctxLn.moveTo(px, py);
+            else ctxLn.lineTo(px, py);
+        }
+        ctxLn.stroke();
+        ctxLn.restore();
+    }
+    function drawTangentLn(x0) {
+        const y0 = f_ln(x0);
+        const slope = df_ln(x0);
+        // Tangent line: y = slope*(x-x0) + y0, only for x > 0 and y >= 0
+        let tx1 = Math.max(xMinLn, 0.0001);
+        let tx2 = xMaxLn;
+        // Find the leftmost x where tangent is y >= 0
+        while (tx1 < tx2 && (slope * (tx1 - x0) + y0) < 0) {
+            tx1 += 0.01;
+        }
+        // Find the rightmost x where tangent is y >= 0
+        while (tx2 > tx1 && (slope * (tx2 - x0) + y0) < 0) {
+            tx2 -= 0.01;
+        }
+        let ty1 = slope * (tx1 - x0) + y0;
+        let ty2 = slope * (tx2 - x0) + y0;
+        if (tx1 < tx2) {
+            ctxLn.save();
+            ctxLn.strokeStyle = '#ff4136';
+            ctxLn.lineWidth = 2;
+            ctxLn.setLineDash([6, 6]);
+            ctxLn.beginPath();
+            ctxLn.moveTo(xToCanvasLn(tx1), yToCanvasLn(ty1));
+            ctxLn.lineTo(xToCanvasLn(tx2), yToCanvasLn(ty2));
+            ctxLn.stroke();
+            ctxLn.setLineDash([]);
+            ctxLn.restore();
+        }
+    }
+    function drawPointLn(x0) {
+        const y0 = f_ln(x0);
+        ctxLn.save();
+        ctxLn.fillStyle = '#2ecc40';
+        ctxLn.beginPath();
+        ctxLn.arc(xToCanvasLn(x0), yToCanvasLn(y0), 7, 0, 2 * Math.PI);
+        ctxLn.fill();
+        ctxLn.strokeStyle = '#222';
+        ctxLn.lineWidth = 2;
+        ctxLn.stroke();
+        ctxLn.font = '16px Arial';
+        ctxLn.fillStyle = '#222';
+        ctxLn.textAlign = 'left';
+        ctxLn.textBaseline = 'bottom';
+        const label = `(${x0.toFixed(2)}, ${y0.toFixed(2)})`;
+        ctxLn.fillText(label, xToCanvasLn(x0) + 12, yToCanvasLn(y0) - 8);
+        ctxLn.restore();
+    }
+    function drawLn(x0) {
+        ctxLn.clearRect(0, 0, widthLn, heightLn);
+        drawAxesLn();
+        drawFunctionLn();
+        if (x0 > 0) {
+            drawTangentLn(x0);
+            drawPointLn(x0);
+        }
+    }
+    const sliderLn = document.getElementById('x0-slider-ln');
+    const x0ValueLn = document.getElementById('x0-value-ln');
+    const slopeDisplayLn = document.getElementById('slope-value-ln');
+    function updateLn() {
+        const x0 = parseFloat(sliderLn.value);
+        x0ValueLn.textContent = x0.toFixed(2);
+        if (x0 > 0) {
+            drawLn(x0);
+            if (slopeDisplayLn) {
+                slopeDisplayLn.textContent = df_ln(x0).toFixed(2);
+            }
+            sliderLn.classList.remove('invalid-ln');
+        } else {
+            drawLn(x0);
+            if (slopeDisplayLn) {
+                slopeDisplayLn.textContent = 'undefined';
+            }
+            sliderLn.classList.add('invalid-ln');
+        }
+    }
+    sliderLn.addEventListener('input', updateLn);
+    updateLn();
+    function f_parabola(x) { return x * x + 10; }
+    function df_parabola(x) { return 2 * x; }
+    const canvasParabola = document.getElementById('graph-parabola');
+    const ctxParabola = canvasParabola.getContext('2d');
+    const widthParabola = canvasParabola.width;
+    const heightParabola = canvasParabola.height;
+    const xMinParabola = -15, xMaxParabola = 15;
+    const yMinParabola = -10, yMaxParabola = 250;
+    function xToCanvasParabola(x) {
+        return (x - xMinParabola) / (xMaxParabola - xMinParabola) * widthParabola;
+    }
+    function yToCanvasParabola(y) {
+        return heightParabola - (y - yMinParabola) / (yMaxParabola - yMinParabola) * heightParabola;
+    }
+    function drawAxesParabola() {
+        ctxParabola.save();
+        ctxParabola.strokeStyle = '#bbb';
+        ctxParabola.lineWidth = 1;
+        // x axis
+        ctxParabola.beginPath();
+        ctxParabola.moveTo(xToCanvasParabola(xMinParabola), yToCanvasParabola(0));
+        ctxParabola.lineTo(xToCanvasParabola(xMaxParabola), yToCanvasParabola(0));
+        ctxParabola.stroke();
+        // y axis
+        ctxParabola.beginPath();
+        ctxParabola.moveTo(xToCanvasParabola(0), yToCanvasParabola(yMinParabola));
+        ctxParabola.lineTo(xToCanvasParabola(0), yToCanvasParabola(yMaxParabola));
+        ctxParabola.stroke();
+        ctxParabola.restore();
+    }
+    function drawFunctionParabola() {
+        ctxParabola.save();
+        ctxParabola.strokeStyle = '#0074d9';
+        ctxParabola.lineWidth = 2;
+        ctxParabola.beginPath();
+        for (let px = 0; px <= widthParabola; px++) {
+            let x = xMinParabola + (xMaxParabola - xMinParabola) * px / widthParabola;
+            let y = f_parabola(x);
+            let py = yToCanvasParabola(y);
+            if (px === 0) ctxParabola.moveTo(px, py);
+            else ctxParabola.lineTo(px, py);
+        }
+        ctxParabola.stroke();
+        ctxParabola.restore();
+    }
+    function drawTangentParabola(x0) {
+        const y0 = f_parabola(x0);
+        const slope = df_parabola(x0);
+        const x1 = xMinParabola, y1 = slope * (x1 - x0) + y0;
+        const x2 = xMaxParabola, y2 = slope * (x2 - x0) + y0;
+        ctxParabola.save();
+        ctxParabola.strokeStyle = '#ff4136';
+        ctxParabola.lineWidth = 2;
+        ctxParabola.setLineDash([6, 6]);
+        ctxParabola.beginPath();
+        ctxParabola.moveTo(xToCanvasParabola(x1), yToCanvasParabola(y1));
+        ctxParabola.lineTo(xToCanvasParabola(x2), yToCanvasParabola(y2));
+        ctxParabola.stroke();
+        ctxParabola.setLineDash([]);
+        ctxParabola.restore();
+    }
+    function drawPointParabola(x0) {
+        const y0 = f_parabola(x0);
+        ctxParabola.save();
+        ctxParabola.fillStyle = '#2ecc40';
+        ctxParabola.beginPath();
+        ctxParabola.arc(xToCanvasParabola(x0), yToCanvasParabola(y0), 7, 0, 2 * Math.PI);
+        ctxParabola.fill();
+        ctxParabola.strokeStyle = '#222';
+        ctxParabola.lineWidth = 2;
+        ctxParabola.stroke();
+        ctxParabola.font = '16px Arial';
+        ctxParabola.fillStyle = '#222';
+        ctxParabola.textAlign = 'left';
+        ctxParabola.textBaseline = 'bottom';
+        const label = `(${x0.toFixed(2)}, ${y0.toFixed(2)})`;
+        ctxParabola.fillText(label, xToCanvasParabola(x0) + 12, yToCanvasParabola(y0) - 8);
+        ctxParabola.restore();
+    }
+    function drawParabola(x0) {
+        ctxParabola.clearRect(0, 0, widthParabola, heightParabola);
+        drawAxesParabola();
+        drawFunctionParabola();
+        drawTangentParabola(x0);
+        drawPointParabola(x0);
+    }
+    const sliderParabola = document.getElementById('x0-slider-parabola');
+    const x0ValueParabola = document.getElementById('x0-value-parabola');
+    const slopeDisplayParabola = document.getElementById('slope-value-parabola');
+    function updateParabola() {
+        const x0 = parseFloat(sliderParabola.value);
+        x0ValueParabola.textContent = x0.toFixed(2);
+        drawParabola(x0);
+        if (slopeDisplayParabola) {
+            slopeDisplayParabola.textContent = df_parabola(x0).toFixed(2);
+        }
+    }
+    sliderParabola.addEventListener('input', updateParabola);
+    updateParabola();
+
+    // --- Sine Example ---
+    function f_sine(x) { return Math.sin(x); }
+    function df_sine(x) { return Math.cos(x); }
+    const canvasSine = document.getElementById('graph-sine');
+    const ctxSine = canvasSine.getContext('2d');
+    const widthSine = canvasSine.width;
+    const heightSine = canvasSine.height;
+    const xMinSine = -2 * Math.PI, xMaxSine = 2 * Math.PI;
+    const yMinSine = -1.5, yMaxSine = 1.5;
+    function xToCanvasSine(x) {
+        return (x - xMinSine) / (xMaxSine - xMinSine) * widthSine;
+    }
+    function yToCanvasSine(y) {
+        return heightSine - (y - yMinSine) / (yMaxSine - yMinSine) * heightSine;
+    }
+    function drawAxesSine() {
+        ctxSine.save();
+        ctxSine.strokeStyle = '#bbb';
+        ctxSine.lineWidth = 1;
+        ctxSine.beginPath();
+        ctxSine.moveTo(xToCanvasSine(xMinSine), yToCanvasSine(0));
+        ctxSine.lineTo(xToCanvasSine(xMaxSine), yToCanvasSine(0));
+        ctxSine.stroke();
+        ctxSine.beginPath();
+        ctxSine.moveTo(xToCanvasSine(0), yToCanvasSine(yMinSine));
+        ctxSine.lineTo(xToCanvasSine(0), yToCanvasSine(yMaxSine));
+        ctxSine.stroke();
+        ctxSine.restore();
+    }
+    function drawFunctionSine() {
+        ctxSine.save();
+        ctxSine.strokeStyle = '#0074d9';
+        ctxSine.lineWidth = 2;
+        ctxSine.beginPath();
+        for (let px = 0; px <= widthSine; px++) {
+            let x = xMinSine + (xMaxSine - xMinSine) * px / widthSine;
+            let y = f_sine(x);
+            let py = yToCanvasSine(y);
+            if (px === 0) ctxSine.moveTo(px, py);
+            else ctxSine.lineTo(px, py);
+        }
+        ctxSine.stroke();
+        ctxSine.restore();
+    }
+    function drawTangentSine(x0) {
+        const y0 = f_sine(x0);
+        const slope = df_sine(x0);
+        const x1 = xMinSine, y1 = slope * (x1 - x0) + y0;
+        const x2 = xMaxSine, y2 = slope * (x2 - x0) + y0;
+        ctxSine.save();
+        ctxSine.strokeStyle = '#ff4136';
+        ctxSine.lineWidth = 2;
+        ctxSine.setLineDash([6, 6]);
+        ctxSine.beginPath();
+        ctxSine.moveTo(xToCanvasSine(x1), yToCanvasSine(y1));
+        ctxSine.lineTo(xToCanvasSine(x2), yToCanvasSine(y2));
+        ctxSine.stroke();
+        ctxSine.setLineDash([]);
+        ctxSine.restore();
+    }
+    function drawPointSine(x0) {
+        const y0 = f_sine(x0);
+        ctxSine.save();
+        ctxSine.fillStyle = '#2ecc40';
+        ctxSine.beginPath();
+        ctxSine.arc(xToCanvasSine(x0), yToCanvasSine(y0), 7, 0, 2 * Math.PI);
+        ctxSine.fill();
+        ctxSine.strokeStyle = '#222';
+        ctxSine.lineWidth = 2;
+        ctxSine.stroke();
+        ctxSine.font = '16px Arial';
+        ctxSine.fillStyle = '#222';
+        ctxSine.textAlign = 'left';
+        ctxSine.textBaseline = 'bottom';
+        const label = `(${x0.toFixed(2)}, ${y0.toFixed(2)})`;
+        ctxSine.fillText(label, xToCanvasSine(x0) + 12, yToCanvasSine(y0) - 8);
+        ctxSine.restore();
+    }
+    function drawSine(x0) {
+        ctxSine.clearRect(0, 0, widthSine, heightSine);
+        drawAxesSine();
+        drawFunctionSine();
+        drawTangentSine(x0);
+        drawPointSine(x0);
+    }
+    const sliderSine = document.getElementById('x0-slider-sine');
+    const x0ValueSine = document.getElementById('x0-value-sine');
+    const slopeDisplaySine = document.getElementById('slope-value-sine');
+    function updateSine() {
+        const x0 = parseFloat(sliderSine.value);
+        x0ValueSine.textContent = x0.toFixed(2);
+        drawSine(x0);
+        if (slopeDisplaySine) {
+            slopeDisplaySine.textContent = df_sine(x0).toFixed(2);
+        }
+    }
+    sliderSine.addEventListener('input', updateSine);
+    updateSine();
+    </script>
+</body>
+</html>
